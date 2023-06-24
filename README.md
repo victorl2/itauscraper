@@ -1,6 +1,6 @@
 # Itaú Scrapper
 
-Scrapper para obter dados do banco itaú. __( work in progress )__
+Scrapper para obter dados do banco Itaú. __( work in progress )__
 
 ## Instalação
 É necessário ter o [Python 3.9.6](https://www.python.org/downloads/) ou superior instalado.
