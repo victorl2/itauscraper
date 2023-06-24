@@ -153,8 +153,8 @@ class ItauScraper:
         """
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
-                headless=False,
-                slow_mo=200,
+                headless=True,
+                slow_mo=220,
             )
 
             context = browser.new_context(
