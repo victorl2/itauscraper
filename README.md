@@ -1,4 +1,4 @@
-# Itaú Scrapper
+# Itaú Scraper
 
 Scrapper para obter dados do banco Itaú. __( work in progress )__
 
