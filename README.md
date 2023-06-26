@@ -28,9 +28,10 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  cartoes  Lista os cartões de crédito com suas faturas abertas
-  extrato  Extrato com transações dos últimos 90 dias
-  login    Inicia a conexão conexão com o banco e Itau
-  saldo    Saldo disponível em conta
+  cartoes        Lista os cartões de crédito com suas faturas abertas
+  extrato        Extrato com transações dos últimos 90 dias
+  investimentos  Saldo investido consolidado por categoria
+  login          Inicia a conexão com o banco Itaú
+  saldo          Saldo disponível em conta
 ```
 
