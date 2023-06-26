@@ -18,10 +18,19 @@ pip install -r requirements.txt
 ```
 
 ## Utilização
-Entre na pasta **itauscraper** e execute o comando:
+Entre na pasta **itauscraper** e execute o arquivo **itau.py** com o comando desejado.
 ```bash
-python itau.py login [conta] [agencia] [senha internet banking]
+Usage: itau.py [OPTIONS] COMMAND [ARGS]...
 
-python itau.py saldo
+  Scraper para obter informações de contas (pessoa física) no banco Itaú
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  cartoes  Lista os cartões de crédito com suas faturas abertas
+  extrato  Extrato com transações dos últimos 90 dias
+  login    Inicia a conexão conexão com o banco e Itau
+  saldo    Saldo disponível em conta
 ```
 

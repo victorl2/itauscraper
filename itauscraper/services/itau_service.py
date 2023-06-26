@@ -54,10 +54,11 @@ def list_credit_cards(credentials: AuthCredentials) -> list[CreditCard]:
     if response_cards_list.status_code != requests.codes.ok:
         return None
 
-    credit_card_ids = [card['id']
-                       for card in response_cards_list.json()['object']['data']]
+
     response_cards_statement = itau_scrapper.credit_card_details(
-        credentials, credit_card_ids)
+        credentials = credentials, 
+        ids = [card['id']for card in response_cards_list.json()['object']['data']]
+    )
 
     if response_cards_statement.status_code != requests.codes.ok:
         return None
