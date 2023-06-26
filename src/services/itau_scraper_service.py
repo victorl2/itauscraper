@@ -1,8 +1,6 @@
 import uuid
 import requests
 from requests import Response
-
-from fake_useragent import UserAgent
 from models.auth_model import AuthCredentials, Operation
 
 from playwright.sync_api import sync_playwright
@@ -12,28 +10,32 @@ from playwright.sync_api._generated import Response as PWResponse
 
 class ItauScraper:
     ITAU_URL = 'https://www.itau.com.br'
-    INVESTMENT_URL = f'https://apicd.cloud.itau.com.br/charon/orng2'
+    INVESTMENT_URL = 'apicd.cloud.itau.com.br'
+    LIST_CREDIT_CARDS_BODY = 'secao=Cartoes&item=Home'
+    ACCOUNT_STATEMENT_BODY = 'filtro=periodoVisualizacao&valor=90'
 
     def __init__(self):
-        self.user_agent_generator = UserAgent(
-            browsers=['edge', 'chrome', 'firefox', 'safari'])
+        self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'
 
     def account_statement(self, credentials: AuthCredentials) -> Response:
         """Get the account statement for the last 90 days"""
-        operation = credentials.operationCodes.account_statement
-        return self.__router_request(operation, credentials)
+        headers = self.__headers(credentials, credentials.operationCodes.account_statement)
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        return requests.post(credentials.itau_router_url, headers=headers, data=self.ACCOUNT_STATEMENT_BODY)
 
     def credit_cards_list(self, credentials: AuthCredentials) -> Response:
-        operation = credentials.operationCodes.cards_list
-        return self.__router_request(operation, credentials)
+        headers = self.__headers(credentials, credentials.operationCodes.cards_list)
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        return requests.post(credentials.itau_router_url, headers=headers, data=self.LIST_CREDIT_CARDS_BODY)
 
-    def credit_card_details(self, ids: list[str], credentials: AuthCredentials) -> Response:
+    def credit_card_details(self, credentials: AuthCredentials, ids: list[str]) -> Response:
         """
         Get the list of all credit cards with the open balance and general information.
         does NOT include the transactions for each card.
         """
-        operation = credentials.operationCodes.cards_consolidated_statement
-        return self.__router_request(operation, credentials)
+        headers = self.__headers(credentials, credentials.operationCodes.cards_consolidated_statement)
+        return requests.post(credentials.itau_router_url, headers=headers, json=ids)
+
 
     def investiment_details(self, credentials: AuthCredentials) -> Response:
         """
@@ -60,20 +62,18 @@ class ItauScraper:
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
-                headless=False,
+                headless=True,
                 slow_mo=220,
             )
 
-            context = browser.new_context(
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-            )
+            context = browser.new_context(user_agent=self.user_agent)
 
             print(f'starting connection with {self.ITAU_URL}')
             page = context.new_page()
 
             def response_callback(response: PWResponse):
                 nonlocal x_client_id, x_auth_token, authorization
-                if 'router-app/router' not in response.url and 'apicd.cloud.itau.com.br' not in response.url:
+                if 'router-app/router' not in response.url and self.INVESTMENT_URL not in response.url:
                     return
 
                 if 'x-client-id' in response.headers:
@@ -85,16 +85,18 @@ class ItauScraper:
 
             def request_callback(request: PWRequest):
                 nonlocal cards_list_operation, account_statement_operation, cards_details_operation, router_url
-                if 'router-app/router' not in request.url and 'apicd.cloud.itau.com.br' not in request.url:
+                if 'router-app/router' not in request.url and self.INVESTMENT_URL not in request.url:
                     return
                 
+                if 'router-app/router' in request.url:
+                    router_url = request.url
+
                 if request.post_data is None:
                     return
-
-                if 'filtro=periodoVisualizacao&valor=90' in request.post_data:
+                
+                if self.ACCOUNT_STATEMENT_BODY in request.post_data:
                     account_statement_operation = request.headers['op']
-                    router_url = request.url
-                if 'secao=Cartoes&item=Home' in request.post_data:
+                if self.LIST_CREDIT_CARDS_BODY in request.post_data:
                     cards_list_operation = request.headers['op']
                 if '[' in request.post_data and ']' in request.post_data:
                     cards_details_operation = request.headers['op']
@@ -124,27 +126,20 @@ class ItauScraper:
                                          account_statement_operation)
                                )
 
-    def __router_request(self, operation: str, credentials: AuthCredentials) -> Response:
-        headers = self.__headers(credentials)
-        headers['op'] = operation
-        return requests.post(self.ROUTER_URL, headers=headers)
-
-    def __headers(self, credentials: AuthCredentials):
+    def __headers(self, credentials: AuthCredentials, operation: str = None):
         return {
             'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json',
             'Pragma': 'no-cache',
-            'Origin': self.ORIGIN,
-            'Referer': self.REFERER,
-            'User-Agent': self.__random_user_agent(),
+            'Origin': credentials.itau_router_url.split('/')[0],
+            'Referer': credentials.itau_router_url,
+            'User-Agent': self.user_agent,
             'X-Client-Id': credentials.x_client_id,
             'X-Auth-Token': credentials.x_auth_token,
             'X-FLOW-ID': self.__random_guid(),
+            'op': operation,
         }
-
-    def __random_user_agent(self) -> str:
-        return self.user_agent_generator.random
-
+    
     def __random_guid(self) -> str:
         return str(uuid.uuid4())
 

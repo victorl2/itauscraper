@@ -1,7 +1,7 @@
 import os
 import dotenv
-from models.auth_model import AuthCredentials
-from services.itau_scraper_service import ItauScraper
+from models.auth_model import AuthCredentials, Operation
+from services import itau_service
 from helpers.formatter_helper import format_account_credentials
 
 if __name__ == '__main__':
@@ -22,6 +22,11 @@ if __name__ == '__main__':
     agency = format_account_credentials(agency)
     account = format_account_credentials(account)
     
-    itau_scrapper = ItauScraper()
-    authToken = itau_scrapper.authentication(agency, account, password)
-    print(f'credentials generated for {agency}/{account}')
+    credentials = itau_service.load_saved_credentials()
+    if credentials is None:
+        credentials = itau_service.generate_credentials(agency, account, password)
+        itau_service.save_credentials(credentials)
+
+    cards = itau_service.list_credit_cards(credentials)
+    print('Credit cards:')
+    print(cards)
