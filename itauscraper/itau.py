@@ -62,7 +62,7 @@ load_saved_credentials()
 @click.argument('conta', type=click.STRING, required=True)
 @click.argument('senha', type=click.INT, required=True)
 def login(agencia: str, conta: str, senha: int) -> None:
-    """Inicia a conexão conexão com o banco e Itau"""
+    """Inicia a conexão com o banco Itaú"""
     senha = str(senha)
     if len(senha) != 6:
         print('A senha deve conter apenas 6 "números"')
@@ -90,11 +90,17 @@ def saldo() -> None:
 def cartoes() -> None:
     """Lista os cartões de crédito com suas faturas abertas"""
     itau_service.list_credit_cards(credentials)
+
+@click.command()
+def investimentos() -> None:
+    """Saldo investido consolidado por categoria"""
+    itau_service.list_credit_cards(credentials)
     
 commands.add_command(login)
 commands.add_command(saldo)
 commands.add_command(extrato)
 commands.add_command(cartoes)
+commands.add_command(investimentos)
 
 if __name__ == '__main__':
     commands()
