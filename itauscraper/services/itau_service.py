@@ -1,10 +1,8 @@
-import os
-import pickle
 import requests
 from typing import Tuple
 from services.itau_scraper_service import ItauScraper
 from models.auth_model import AuthCredentials, Operation
-from models.bank_model import CreditCard, OpenCreditCardInvoice
+from models.bank_model import CreditCard, OpenCreditCardInvoice, AccountStatement, Statement
 from helpers.formatter_helper import format_account_credentials
 
 itau_scrapper = ItauScraper()
@@ -16,22 +14,42 @@ def generate_credentials(agency: str, account: str, password: str) -> AuthCreden
         password
     )
 
-def save_credentials(agency: str, account: str, credentials: AuthCredentials, file_path=None) -> None:
-    credentials_file = __credentials_file(agency, account, file_path)
-    with open(credentials_file, 'wb') as file:
-        pickle.dump(credentials, file, pickle.HIGHEST_PROTOCOL)
-
-def load_saved_credentials(agency: str, account: str, file_path=None) -> AuthCredentials:
-    credentials_file = __credentials_file(agency, account, file_path)
-    if not os.path.exists(credentials_file):
+def account_statement(credentials: AuthCredentials) -> AccountStatement:
+    response = itau_scrapper.account_statement(credentials)
+    if response.status_code != requests.codes.ok:
         return None
-    try:
-        with open(credentials_file, 'rb') as file:
-            return pickle.load(file)
-    except:
-        return None
+    response_body = response.json()
+    invoice_statements = response_body['lancamentos']
+    account_statements: list[Statement] = []
+    for statement in invoice_statements:
+        date = statement['dataLancamento']
+        amount = statement['valorLancamento']
+        description = statement['descricaoLancamento']
+        if date is None or amount is None or description == 'SALDO DO DIA':
+            continue
+        account_statements.append(
+            Statement(
+                date=date,
+                description=description if description is not None else '###',
+                value=amount,
+            )
+        )
+    
+    balance = response_body['saldoResumido']["saldoContaCorrente"]["valor"]
+    return AccountStatement(
+        available_balance=float(balance.replace('.', '').replace(',', '.')),
+        transactions=account_statements
+    )
+    
+    
 
-def list_credit_cards(credentials: AuthCredentials) -> Tuple[list[CreditCard], Exception]:
+def account_balance(credentials: AuthCredentials) -> float:
+    statement = account_statement(credentials)
+    if statement is None:
+        return None
+    return statement.available_balance
+
+def list_credit_cards(credentials: AuthCredentials) -> list[CreditCard]:
     response_cards_list = itau_scrapper.credit_cards_list(credentials)
     if response_cards_list.status_code != requests.codes.ok:
         return None
@@ -74,9 +92,3 @@ def list_credit_cards(credentials: AuthCredentials) -> Tuple[list[CreditCard], E
 
         credit_cards.append(credit_card)
     return credit_cards
-
-def __credentials_file(agency: str, account: str, file_path: str) -> str:
-    file_name = f'{format_account_credentials(agency)}_{format_account_credentials(account)}_credentials.pkl'
-    if file_path:
-        return f'{file_path}/{file_name}'
-    return file_name

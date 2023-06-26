@@ -18,8 +18,10 @@ pip install -r requirements.txt
 ```
 
 ## Utilização
-Vá até a raiz do projeto e execute o comando:
-```python
-python src/main.py
+Entre na pasta **itauscraper** e execute o comando:
+```bash
+python itau.py login [conta] [agencia] [senha internet banking]
+
+python itau.py saldo
 ```
 

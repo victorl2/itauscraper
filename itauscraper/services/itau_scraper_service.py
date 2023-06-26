@@ -62,7 +62,7 @@ class ItauScraper:
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
-                headless=True,
+                headless=False,
                 slow_mo=220,
             )
 
@@ -173,6 +173,7 @@ class ItauScraper:
         provided in the bank website
         """
         keys = self.__get_number_keys(page)
+        
         for digit in password:
             keys[digit].click()
             page.wait_for_timeout(1000)

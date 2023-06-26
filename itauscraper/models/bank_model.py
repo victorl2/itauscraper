@@ -5,12 +5,18 @@ class Statement:
     date: str = None
     description: str = None
     value: str = None
-    balance: str = None
+
+@dataclass
+class BankAccount:
+    agency: str = None
+    account: str = None
+    password: str = None
 
 @dataclass
 class AccountStatement:
     available_balance: str = None
     transactions: list[Statement] = None
+
 
 @dataclass
 class OpenCreditCardInvoice:
