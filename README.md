@@ -3,10 +3,12 @@
 Scraper para obter dados do banco [Itaú](itau.com.br):  **extrato, cartões de crédito e investimentos**.
 
 ## Motivação
-Como a maioria dos bancos, o Itaú não disponibiliza APIs para consultas de dados bancários a seus clientes. Antigas implementações disponíveis online, como [bankscraper](https://github.com/kamushadenes/bankscraper), estão em sua maioria defasadas. Desta forma foi necessário a criação deste repositório para interagir com o banco Itaú, a fim de obter os dados desejados.
+Como a maioria dos bancos, o Itaú não disponibiliza APIs para consultas de dados bancários a seus clientes. Antigas implementações disponíveis online, como [bankscraper](https://github.com/kamushadenes/bankscraper), estão em sua maioria defasadas. Desta forma foi necessário a criação deste repositório para interagir com o banco Itaú, a fim de obter os dados de contas corrente.
 
 ## Funcionamento
-Com o objetivo de obter as credenciais necessárias, um navegador é utilizado através com [playwright](https://playwright.dev/python/) para realizar o **login** no [banco Itaú](itau.com.br). Após o login, de posse das informações/credenciais necessárias, é possível realizar as consultas desejadas diretamente via **requisições HTTP**.
+É necessário obter as credenciais para interagir diretamente com as APIs internas do [banco Itaú](itau.com.br), para isso um navegador é utilizado através do [playwright](https://playwright.dev/python/) para realizar o **login**. Após o login, de posse das informações/credenciais, as consultas desejadas são feitas diretamente via **requisições HTTP**.
+
+_Nota: As credenciais tem validade de algumas horas, após este período é necessário executar novamente o fluxo via navegador._
 
 
 ## Instalação
