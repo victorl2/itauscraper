@@ -62,7 +62,7 @@ class ItauScraper:
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
-                headless=False,
+                headless=True,
                 slow_mo=220,
             )
 

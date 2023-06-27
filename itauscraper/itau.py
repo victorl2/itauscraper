@@ -9,21 +9,21 @@ def commands():
     """Scraper para obter informações de contas (pessoa física) no banco Itaú"""
     pass
 
-def __account_file(file_path: str = "data") -> str:
+def __account_file(file_path: str = None) -> str:
     """Returns the file name for the account file"""
     file_name = f'bank_account.pkl'
     if file_path:
         return f'{file_path}/{file_name}'
     return file_name
 
-def __credentials_file(file_path: str = "data") -> str:
+def __credentials_file(file_path: str = None) -> str:
     """Returns the file name for the credentials file"""
     file_name = 'credentials.pkl'
     if file_path:
         return f'{file_path}/{file_name}'
     return file_name
 
-def save_credentials(bank_account: BankAccount, credentials: AuthCredentials, file_path="data") -> None:
+def save_credentials(bank_account: BankAccount, credentials: AuthCredentials, file_path=None) -> None:
     """Saves the credentials and bank account to a file"""
     if bank_account is None:
         raise Exception('Bank account information needs to be avalilable')
@@ -38,7 +38,7 @@ def save_credentials(bank_account: BankAccount, credentials: AuthCredentials, fi
     with open(account_file, 'wb') as file:
         pickle.dump(bank_account, file, pickle.HIGHEST_PROTOCOL)
 
-def load_saved_credentials(file_path="data") -> None:
+def load_saved_credentials(file_path=None) -> None:
     global bank_account, credentials
 
     credentials_file = __credentials_file(file_path)
@@ -75,32 +75,53 @@ def login(agencia: str, conta: str, senha: int) -> None:
 @click.command()
 def extrato() -> None:
     """Extrato com transações dos últimos 90 dias"""
+    __validate_credentials()
     extrato = itau_service.account_statement(credentials)
     print(f'{len(extrato.transactions)} transações nos útimos 90 dias na conta {bank_account.account} e agência {bank_account.agency}')
+    print('## Data - Valor - Descrição ##')
     for transaction in extrato.transactions:
         print(f'{transaction.date} - R$ {transaction.value} - {transaction.description}')
 
 @click.command()
 def saldo() -> None:
     """Saldo disponível em conta"""
+    __validate_credentials()
     balance = itau_service.account_balance(credentials)
     print(f'Saldo disponível: R$ {balance} na conta {bank_account.account} e agência {bank_account.agency}')
     
 @click.command()
 def cartoes() -> None:
     """Lista os cartões de crédito com suas faturas abertas"""
-    itau_service.list_credit_cards(credentials)
+    __validate_credentials()
+    cards = itau_service.list_credit_cards(credentials)
+    print('## Vencimento - Últimos dígitos - Nome - Valor da fatura ##')
+    print(f'{len(cards)} cartões de crédito com faturas abertas')
+    for credit_card in cards:
+        invoice = credit_card.open_invoice
+        print(f'{invoice.due_date} - {credit_card.last_digits} - {credit_card.name} - R$ {invoice.total}')
 
 @click.command()
 def investimentos() -> None:
+    __validate_credentials()
     """Saldo investido consolidado por categoria"""
-    itau_service.list_credit_cards(credentials)
+    investments = itau_service.list_credit_cards(credentials)
+    print('## Categoria - Valor investido ##')
+    for investment in investments:
+        print(f'{investment.category} - R$ {investment.value}')
+
+def __validate_credentials():
+    global bank_account, credentials
+    if credentials is None and bank_account is None:
+        print('Dados da conta bancária não encontrados, é necessário realizar o login')
+        exit(1)
+    if credentials is None:
+        login(bank_account.agency, bank_account.account, bank_account.password)
     
 commands.add_command(login)
 commands.add_command(saldo)
 commands.add_command(extrato)
 commands.add_command(cartoes)
-commands.add_command(investimentos)
+#commands.add_command(investimentos)
 
 if __name__ == '__main__':
     commands()
