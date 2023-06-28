@@ -1,6 +1,7 @@
 import click
 import pickle
 from services import itau_service
+from services.itau_service import SessionExpiredException
 from models.bank_model import BankAccount
 from models.auth_model import AuthCredentials
 
@@ -52,9 +53,10 @@ def load_saved_credentials(file_path=None) -> None:
     finally:
         return
 
+# credentials that will be loaded from the file ( if exists )
 bank_account: BankAccount = None
 credentials: AuthCredentials = None 
-load_saved_credentials()
+load_saved_credentials() 
 
 
 @click.command()
@@ -69,14 +71,27 @@ def login(agencia: str, conta: str, senha: int) -> None:
         exit(1)
     account = BankAccount(agencia, conta, senha)
     credentials = itau_service.generate_credentials(agencia, conta, senha)
+    print(credentials)
     save_credentials(account, credentials)
     print("Login realizado com sucesso!")
+
+@click.command()
+def atualizar_credenciais() -> None:
+    """Atualiza credenciais com conta, agência e senhas do ultimo login"""
+    credentials = itau_service.generate_credentials(bank_account.agency, bank_account.account, bank_account.password)
+    save_credentials(bank_account, credentials)
 
 @click.command()
 def extrato() -> None:
     """Extrato com transações dos últimos 90 dias"""
     __validate_credentials()
-    extrato = itau_service.account_statement(credentials)
+    extrato = None
+    try:
+        extrato = itau_service.account_statement(credentials)
+    except SessionExpiredException:
+        print('Sessão expirada, é necessário realizar o login novamente')
+        exit(1)
+
     print(f'{len(extrato.transactions)} transações nos útimos 90 dias na conta {bank_account.account} e agência {bank_account.agency}')
     print('## Data - Valor - Descrição ##')
     for transaction in extrato.transactions:
@@ -86,14 +101,25 @@ def extrato() -> None:
 def saldo() -> None:
     """Saldo disponível em conta"""
     __validate_credentials()
-    balance = itau_service.account_balance(credentials)
+    balance = None
+    try:
+        balance = itau_service.account_balance(credentials)
+    except SessionExpiredException:
+        print('Sessão expirada, é necessário realizar o login novamente')
+        exit(1)
     print(f'Saldo disponível: R$ {balance} na conta {bank_account.account} e agência {bank_account.agency}')
     
 @click.command()
 def cartoes() -> None:
     """Lista os cartões de crédito com suas faturas abertas"""
     __validate_credentials()
-    cards = itau_service.list_credit_cards(credentials)
+    cards = None
+    try:
+        cards = itau_service.list_credit_cards(credentials)
+    except SessionExpiredException:
+        print('Sessão expirada, é necessário realizar o login novamente')
+        exit(1)
+
     print('## Vencimento - Últimos dígitos - Nome - Valor da fatura ##')
     print(f'{len(cards)} cartões de crédito com faturas abertas')
     for credit_card in cards:
@@ -102,12 +128,12 @@ def cartoes() -> None:
 
 @click.command()
 def investimentos() -> None:
-    __validate_credentials()
     """Saldo investido consolidado por categoria"""
-    investments = itau_service.list_credit_cards(credentials)
-    print('## Categoria - Valor investido ##')
+    __validate_credentials()
+    investments = itau_service.investiments(credentials)
+    print('## Percentual - Categoria - Valor ##')
     for investment in investments:
-        print(f'{investment.category} - R$ {investment.value}')
+        print(f'{investment.percentage}%  - {investment.category} - R$ {investment.amount}')
 
 def __validate_credentials():
     global bank_account, credentials
@@ -116,12 +142,14 @@ def __validate_credentials():
         exit(1)
     if credentials is None:
         login(bank_account.agency, bank_account.account, bank_account.password)
-    
+
+# Add each function as a command option for the CLI
 commands.add_command(login)
 commands.add_command(saldo)
 commands.add_command(extrato)
 commands.add_command(cartoes)
-#commands.add_command(investimentos)
+commands.add_command(investimentos)
+commands.add_command(atualizar_credenciais)
 
 if __name__ == '__main__':
     commands()

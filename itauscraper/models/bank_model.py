@@ -34,3 +34,18 @@ class CreditCard:
     used_limit: str = None
     available_limit: str = None
     open_invoice: OpenCreditCardInvoice = None
+
+@dataclass
+class Asset:
+    code: str = None
+    name: str = None
+    amount: float = None
+
+@dataclass
+class Investment:
+    category: str = None
+    amount: float = None
+    percentage: str = None
+    assets: list[Asset] = None
+
+
