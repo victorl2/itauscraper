@@ -8,7 +8,7 @@ Como a maioria dos bancos, o Itaú não disponibiliza APIs para consultas de dad
 ## Funcionamento
 É necessário obter as credenciais para interagir diretamente com as APIs internas do [banco Itaú](itau.com.br), para isso um navegador é utilizado através do [playwright](https://playwright.dev/python/) para realizar o **login**. Após o login, de posse das informações/credenciais, as consultas desejadas são feitas diretamente via **requisições HTTP**.
 
-_Nota: As credenciais tem validade de algumas horas, após este período é necessário executar novamente o fluxo via navegador._
+_Nota: As credenciais tem validade de algumas horas, após este período é necessário atualizar os tokens utilizados._
 
 
 ## Instalação
