@@ -1,6 +1,7 @@
 import click
 import pickle
 from services import itau_service
+from helpers.formatter_helper import format_money_brl
 from services.itau_service import SessionExpiredException
 from models.bank_model import BankAccount
 from models.auth_model import AuthCredentials
@@ -58,7 +59,6 @@ bank_account: BankAccount = None
 credentials: AuthCredentials = None 
 load_saved_credentials() 
 
-
 @click.command()
 @click.argument('agencia', type=click.STRING, required=True)
 @click.argument('conta', type=click.STRING, required=True)
@@ -89,13 +89,12 @@ def extrato() -> None:
     try:
         extrato = itau_service.account_statement(credentials)
     except SessionExpiredException:
-        print('Sessão expirada, é necessário realizar o login novamente')
-        exit(1)
+        session_expired()
 
-    print(f'{len(extrato.transactions)} transações nos útimos 90 dias na conta {bank_account.account} e agência {bank_account.agency}')
-    print('## Data - Valor - Descrição ##')
+    print(f'{len(extrato.transactions)} transações nos útimos 90 dias na conta {bank_account.account} com {bank_account.agency}')
+    print('## Data - Tipo - Valor - Descrição ##')
     for transaction in extrato.transactions:
-        print(f'{transaction.date} - R$ {transaction.value} - {transaction.description}')
+        print(f'{transaction.date} - {transaction.type} - {format_money_brl(transaction.value)} - {transaction.description}')
 
 @click.command()
 def saldo() -> None:
@@ -105,9 +104,8 @@ def saldo() -> None:
     try:
         balance = itau_service.account_balance(credentials)
     except SessionExpiredException:
-        print('Sessão expirada, é necessário realizar o login novamente')
-        exit(1)
-    print(f'Saldo disponível: R$ {balance} na conta {bank_account.account} e agência {bank_account.agency}')
+        session_expired()
+    print(f'Saldo disponível: {format_money_brl(balance)} na conta {bank_account.account} com agência {bank_account.agency}')
     
 @click.command()
 def cartoes() -> None:
@@ -117,23 +115,41 @@ def cartoes() -> None:
     try:
         cards = itau_service.list_credit_cards(credentials)
     except SessionExpiredException:
-        print('Sessão expirada, é necessário realizar o login novamente')
-        exit(1)
+        session_expired()
 
     print('## Vencimento - Últimos dígitos - Nome - Valor da fatura ##')
     print(f'{len(cards)} cartões de crédito com faturas abertas')
     for credit_card in cards:
         invoice = credit_card.open_invoice
-        print(f'{invoice.due_date} - {credit_card.last_digits} - {credit_card.name} - R$ {invoice.total}')
+        print(f'{invoice.due_date} - {credit_card.last_digits} - {credit_card.name} - {format_money_brl(invoice.total)}')
 
 @click.command()
 def investimentos() -> None:
     """Saldo investido consolidado por categoria"""
     __validate_credentials()
-    investments = itau_service.investiments(credentials)
-    print('## Percentual - Categoria - Valor ##')
+    investments = None
+    try:
+        investments = itau_service.investiments(credentials)
+    except:
+        session_expired()
+
+    print('## Ticker - Valor - Nome ##')
     for investment in investments:
-        print(f'{investment.percentage}%  - {investment.category} - R$ {investment.amount}')
+        print(f'{investment.percentage}%  - {investment.category} - {format_money_brl(investment.amount)}')
+
+@click.command()
+def fiis() -> None:
+    """Saldo (de cada ativo) investido em fundos imobiliários"""
+    __validate_credentials()
+    fiis = None
+    try:
+        fiis = itau_service.fiis(credentials)
+    except:
+        session_expired()
+
+    print('## Percentual - Categoria - Valor ##')
+    for fii in fiis:
+        print(f'{fii.code} - {format_money_brl(fii.amount)} - {fii.name}')
 
 def __validate_credentials():
     global bank_account, credentials
@@ -143,11 +159,16 @@ def __validate_credentials():
     if credentials is None:
         login(bank_account.agency, bank_account.account, bank_account.password)
 
+def session_expired():
+    print('Sessão expirada, é necessário "atualizar-credenciais" ou realizar o "login" novamente')
+    exit(1)
+
 # Add each function as a command option for the CLI
 commands.add_command(login)
 commands.add_command(saldo)
 commands.add_command(extrato)
 commands.add_command(cartoes)
+commands.add_command(fiis)
 commands.add_command(investimentos)
 commands.add_command(atualizar_credenciais)
 

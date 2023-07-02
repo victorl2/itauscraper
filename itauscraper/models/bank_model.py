@@ -4,7 +4,8 @@ from dataclasses import dataclass
 class Statement:
     date: str = None
     description: str = None
-    value: str = None
+    value: float = None
+    type: str = None
 
 @dataclass
 class BankAccount:
@@ -20,7 +21,7 @@ class AccountStatement:
 
 @dataclass
 class OpenCreditCardInvoice:
-    total: str = None
+    total: float = None
     due_date: str = None
     close_date: str = None
 
@@ -30,9 +31,9 @@ class CreditCard:
     name: str = None
     last_digits: str = None
     expiration_date: str = None
-    total_limit: str = None
-    used_limit: str = None
-    available_limit: str = None
+    total_limit: float = None
+    used_limit: float = None
+    available_limit: float = None
     open_invoice: OpenCreditCardInvoice = None
 
 @dataclass

@@ -68,7 +68,7 @@ class ItauScraper:
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
-                headless=False,
+                headless=True,
                 slow_mo=220,
             )
 
@@ -92,8 +92,7 @@ class ItauScraper:
                 try:
                     body_text = response.text()
                     if body_text is not None and "ordenadoPorTipo" in body_text:
-                        investment_operation = response.request.headers['op']
-                        print(f'investment operation {response.request.headers["op"]}')                
+                        investment_operation = response.request.headers['op']           
                 except:
                     pass
 
@@ -122,8 +121,7 @@ class ItauScraper:
             account_description = f'account {account} with agency {agency}'
 
             self.__login(page, account, agency, password)
-            print(
-                f'signed-in in the bank account {account} with agency {agency}')
+            print(f'signed-in in the bank account {account_description}')
 
             self.__goto_investments(page)
             print(f'open investment option for {account_description}')
