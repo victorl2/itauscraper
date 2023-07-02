@@ -77,7 +77,7 @@ def login(agencia: str, conta: str, senha: int) -> None:
 
 @click.command()
 def atualizar_credenciais() -> None:
-    """Atualiza credenciais com conta, agência e senhas do ultimo login"""
+    """Atualiza credenciais armazenadas"""
     credentials = itau_service.generate_credentials(bank_account.agency, bank_account.account, bank_account.password)
     save_credentials(bank_account, credentials)
 
@@ -109,7 +109,7 @@ def saldo() -> None:
     
 @click.command()
 def cartoes() -> None:
-    """Lista os cartões de crédito com suas faturas abertas"""
+    """Lista os cartões de crédito com suas faturas"""
     __validate_credentials()
     cards = None
     try:
@@ -139,7 +139,7 @@ def investimentos() -> None:
 
 @click.command()
 def fiis() -> None:
-    """Saldo (de cada ativo) investido em fundos imobiliários"""
+    """Saldo de cada FII investido"""
     __validate_credentials()
     fiis = None
     try:

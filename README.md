@@ -30,9 +30,10 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  atualizar-credenciais  Atualiza credenciais com conta, agência e senhas...
-  cartoes                Lista os cartões de crédito com suas faturas...
+  atualizar-credenciais  Atualiza credenciais armazenadas
+  cartoes                Lista os cartões de crédito com suas faturas
   extrato                Extrato com transações dos últimos 90 dias
+  fiis                   Saldo de cada FII investido
   investimentos          Saldo investido consolidado por categoria
   login                  Inicia a conexão com o banco Itaú
   saldo                  Saldo disponível em conta
