@@ -71,7 +71,6 @@ def login(agencia: str, conta: str, senha: int) -> None:
         exit(1)
     account = BankAccount(agencia, conta, senha)
     credentials = itau_service.generate_credentials(agencia, conta, senha)
-    print(credentials)
     save_credentials(account, credentials)
     print("Login realizado com sucesso!")
 

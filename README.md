@@ -18,6 +18,11 @@ Adicione as dependências do projeto
 ```bash
 pip install -r requirements.txt
 ```
+Instale o playwright e suas dependencias
+```bash
+playwright install
+playwright install-deps
+```
 
 ## Utilização
 Entre na pasta **itauscraper** e execute o arquivo **itau.py** com o comando desejado.
