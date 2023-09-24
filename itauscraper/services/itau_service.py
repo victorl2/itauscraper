@@ -71,9 +71,9 @@ def fiis(credentials: AuthCredentials) -> list[Asset]:
             continue
 
         fiis.extend([Asset(
-                        code=asset['codigoProduto'],
-                        name=asset['nomeProduto'],
-                        amount=asset['valorInvestidoGrafico'],
+                        code=asset['codigoProduto'] if 'codigoProduto' in asset else 'Unknown',
+                        name=asset['nomeProduto'] if 'nomeProduto' in asset else 'Unknown',
+                        amount=asset['valorInvestidoGrafico'] if 'valorInvestidoGrafico' in asset else 0.0,
                     ) for asset in investment['subLista']])
     fiis.sort(key=lambda x: x.amount, reverse=True)
     return fiis
@@ -86,14 +86,14 @@ def investiments(credentials: AuthCredentials) -> list[Investment]:
     for investment in investments:
         investiments_list.append(
             Investment(
-                category=investment["subLista"][0]["tipoInvestimento"],
-                amount=investment['valorParaGrafico'],
-                percentage=investment['percentualTotal'],
+                category=investment["subLista"][0]["tipoInvestimento"] if 'tipoInvestimento' in investment["subLista"][0] else 'Unknown',
+                amount=investment['valorParaGrafico'] if 'valorParaGrafico' in investment else 0.0,
+                percentage=investment['percentualTotal'] if 'percentualTotal' in investment else 0.0,
                 assets=[
                     Asset(
-                        code=asset['codigoProduto'],
-                        name=asset['nomeProduto'],
-                        amount=asset['valorInvestidoGrafico'],
+                        code=asset['codigoProduto'] if 'codigoProduto' in asset else 'Unknown',
+                        name=asset['nomeProduto'] if 'nomeProduto' in asset else 'Unknown',
+                        amount=asset['valorInvestidoGrafico'] if 'valorInvestidoGrafico' in asset else 0.0,
                     ) for asset in investment['subLista']
                 ]
             )
