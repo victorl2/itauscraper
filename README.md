@@ -12,7 +12,7 @@ _Nota: As credenciais tem validade de algumas horas, após este período é nece
 
 
 ## Instalação
-É necessário possuir [Python 3.9.6](https://www.python.org/downloads/) (ou superior) instalado.
+É necessário possuir [Python 3.10.13](https://www.python.org/downloads/) instalado.
 
 Adicione as dependências do projeto 
 ```bash
