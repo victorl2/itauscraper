@@ -68,7 +68,7 @@ class ItauScraper:
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(
-                headless=True,
+                headless=False,
                 slow_mo=220,
             )
 
@@ -173,24 +173,50 @@ class ItauScraper:
             f'filling account information for account {conta} with agency {agencia}')
         self.__fill_account_data(page, conta, agencia)
 
+        itoken = input("enter your itau itoken:")  
+        self.__fill_itoken(page, itoken.strip())
+
         print(
             f'filling internet banking password for account {conta} with agency {agencia}')
         self.__fill_secure_password(page, senha)
 
     def __fill_account_data(self, page, conta, agencia):
         """fill the account and agency number in the bank website"""
-        page.click('#open_modal')
+        page.click('button#open_modal_more_access')
+        page.wait_for_selector('div.idl-modal-more-access-container')
+
+        page.click('input#idl-more-access-input-agency')  # click in the input with id = 'agencia'
+
+        print("typing agency")
+        page.type('input#idl-more-access-input-agency', agencia, delay=50)
+
+        page.click('input#idl-more-access-input-account')
+
+        print("typing account")
+        page.type('input#idl-more-access-input-account', conta, delay=50)
+
+        # accept cookies
+        if page.locator("button#itau-cookie-consent-banner-accept-cookies-btn").is_visible():
+            page.click("button#itau-cookie-consent-banner-accept-cookies-btn")
+
+        page.wait_for_selector('button#idl-more-access-submit-button:not([disabled])')
+        page.click('button#idl-more-access-submit-button')
         page.wait_for_load_state('networkidle')
 
-        page.click('#ag')  # click in the input with id = 'agencia'
-        page.type('#ag', agencia, delay=50)
 
-        page.click('#cc')
-        page.type('#cc', conta, delay=50)
-
+    def __fill_itoken(self, page, itoken):
+        """
+        fill the required itoken
+        """
+        page.wait_for_selector('input#app-entraCodigo')
+        page.click('input#app-entraCodigo')
+        print("typing itoken")
+        page.type('input#app-entraCodigo', itoken, delay=50)
+        page.wait_for_selector('a#app-codigoOk:not([disabled])')
+        page.click('a#app-codigoOk')
         page.wait_for_load_state('networkidle')
-        page.click('#btn_acessos')
-        page.wait_for_selector('#acessar')
+        
+
 
     def __fill_secure_password(self, page, password):
         """
@@ -211,6 +237,7 @@ class ItauScraper:
         the keys are the numbers and the values are the elements in the page.
         note: this is the keyboard used to type passwords in a secure way inside the bank website
         """
+        page.wait_for_selector('.teclas.clearfix a')
         links = page.query_selector_all('.teclas.clearfix a')
         keys = {}
         for link in links:
@@ -225,18 +252,13 @@ class ItauScraper:
         once logged in and in the account page,
         this function will navigate to the credit card balances page
         """
-        page.click('#cartao-card-accordion')
-
-        # wait for button with aria-label = 'mais cartões'
-        mais_cartoes = 'button[aria-label="mais cartões"]'
-        page.wait_for_selector(mais_cartoes)
-        page.click(mais_cartoes)
-
-        # wait for button with content = 'exibir mais cartões'
-        exibir_mais_cartoes = 'button:has-text("exibir mais cartões")'
-        page.wait_for_selector(exibir_mais_cartoes)
-        page.click(exibir_mais_cartoes)
-        page.wait_for_load_state('networkidle')
+        expandir_cartoes = 'button#cartao-card-accordion'
+        cartoes_table = 'div.content-cartoes'
+        while not page.locator(cartoes_table).is_visible():
+            page.wait_for_selector(expandir_cartoes)
+            page.click(expandir_cartoes)
+            page.wait_for_timeout(2000)
+            
 
     def __goto_initial_banking_page(self, page):
         """Go to the initial banking page"""
@@ -263,14 +285,28 @@ class ItauScraper:
             page.wait_for_selector(show_button)
             page.click(show_button)
 
+        page.wait_for_load_state('domcontentloaded')
         page.wait_for_selector(ver_extrato)
+        
         page.click(ver_extrato)
-        page.wait_for_load_state('networkidle')
+        page.wait_for_load_state('domcontentloaded')
 
-        statement_select = '#extrato-filtro-lancamentos select'
+        statement_select = 'div#periodoFiltro'
         statement_days = "90"
 
-        page.wait_for_selector(statement_select)
-        page.select_option(statement_select, statement_days)
+        page.click(statement_select)  # Replace with the selector for the expandable div
+
+        page.wait_for_selector("ul#periodoFiltroList")
+        # Scroll to the last item in the list to ensure all options are loaded
+        list_items = page.locator("ul#periodoFiltroList li")  # Select all list items; adjust the selector if necessary
+
+        # Scroll until you find the specific 'li' with `data-id="90"`
+        for i in range(list_items.count()):
+            item = list_items.nth(i)
+            item.scroll_into_view_if_needed()
+            
+            # Check if the item has `data-id="90"`
+            if item.get_attribute("data-id") == statement_days:
+                item.click()
+                break
         page.wait_for_load_state('networkidle')
-        page.wait_for_selector(statement_select)
